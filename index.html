@@ -150,9 +150,9 @@
         <!-- Start/Game Over Screen -->
         <div id="overlay">
             <h1 id="title-text">KITTEN CATCH</h1>
-            <p id="instruction-text">Catch kittens (+50) and avoid clouds!</p>
+            <p id="instruction-text">Pochytej koťátka a prosecco (+50) a vyhni se cibuli!</p>
             <div id="final-score-display">Final Score: <span id="final-score-value">0</span></div>
-            <button id="start-btn">PLAY GAME</button>
+            <button id="start-btn">START</button>
         </div>
     </div>
 
@@ -251,7 +251,7 @@
 
         function gameOver() {
             gameActive = false;
-            titleText.innerText = 'GAME OVER';
+            titleText.innerText = 'SMRDÍŠ CIBULÍ';
             finalScoreValue.innerText = score;
             finalScoreDisplay.style.display = 'block';
             startBtn.innerText = 'RESTART';
