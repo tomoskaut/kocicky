@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kitten Catch Game</title>
+    <style>
+        /* CSS - Styling for the game */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #8fb180; /* Grass green background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            display: block;
+        }
+
+        /* Score Display */
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            padding: 10px 20px;
+            border-radius: 15px;
+            color: white;
+            border: 1px border rgba(255, 255, 255, 0.3);
+        }
+
+        #score-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+        }
+
+        #score-value {
+            font-size: 32px;
+            font-weight: 900;
+        }
+
+        /* Mobile Controls */
+        .controls {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        .arrow-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .arrow-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .arrow-btn svg {
+            fill: white;
+            opacity: 0.5;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Start Screen and Game Over */
+        #overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 100;
+            text-align: center;
+        }
+
+        #final-score-display {
+            font-size: 24px;
+            margin: 10px 0;
+            display: none;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        #start-btn {
+            background: white;
+            color: #4a6741;
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- The Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Score counter -->
+        <div id="score-board">
+            <span id="score-label">Score</span>
+            <span id="score-value">0</span>
+        </div>
+
+        <!-- Transparent arrows for mobile -->
+        <div class="controls">
+            <div id="btn-left" class="arrow-btn" ontouchstart="moveLeft(true)" ontouchend="moveLeft(false)" onmousedown="moveLeft(true)" onmouseup="moveLeft(false)">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </div>
+            <div id="btn-right" class="arrow-btn" ontouchstart="moveRight(true)" ontouchend="moveRight(false)" onmousedown="moveRight(true)" onmouseup="moveRight(false)">
+                <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+            </div>
+        </div>
+
+        <!-- Start/Game Over Screen -->
+        <div id="overlay">
+            <h1 id="title-text">KITTEN CATCH</h1>
+            <p id="instruction-text">Catch kittens (+50) and avoid clouds!</p>
+            <div id="final-score-display">Final Score: <span id="final-score-value">0</span></div>
+            <button id="start-btn">PLAY GAME</button>
+        </div>
+    </div>
+
+    <script>
+        /***********************************************************
+         * EDIT THESE PATHS TO CHANGE YOUR PICTURES
+         ***********************************************************/
+        const IMAGE_PATHS = {
+            player: 'images/player.png',
+            good1:  'images/good1.png',
+            good2:  'images/good2.png',
+            good3:  'images/good3.png',
+            bad:    'images/bad.png'
+        };
+
+        // Game Settings
+        const GAME_CONFIG = {
+            playerSpeed: 10,
+            itemSpawnRate: 1000, // ms
+            itemBaseSpeed: 3
+        };
+
+        /***********************************************************
+         * JAVASCRIPT - Game Logic
+         ***********************************************************/
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score-value');
+        const overlay = document.getElementById('overlay');
+        const startBtn = document.getElementById('start-btn');
+        const titleText = document.getElementById('title-text');
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const finalScoreValue = document.getElementById('final-score-value');
+
+        let score = 0;
+        let gameActive = false;
+        let items = [];
+        let lastSpawn = 0;
+        
+        // Player properties
+        const player = {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 80,
+            movingLeft: false,
+            movingRight: false
+        };
+
+        // Load Images
+        const images = {};
+        for (let key in IMAGE_PATHS) {
+            images[key] = new Image();
+            images[key].src = IMAGE_PATHS[key];
+        }
+
+        // Resize canvas to fill screen
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - player.height - 30;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Control functions
+        function moveLeft(isMoving) { player.movingLeft = isMoving; }
+        function moveRight(isMoving) { player.movingRight = isMoving; }
+
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft(true);
+            if (e.key === 'ArrowRight' || e.key === 'd') moveRight(true);
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft(false);
+            if (e.key === 'ArrowRight' || e.key === 'd') moveRight(false);
+        });
+
+        // Spawn a new falling item
+        function spawnItem() {
+            const types = ['good1', 'good2', 'good3', 'bad'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            items.push({
+                x: Math.random() * (canvas.width - 60),
+                y: -60,
+                width: 60,
+                height: 60,
+                type: type,
+                speed: GAME_CONFIG.itemBaseSpeed + Math.random() * 4, // Random speed
+                image: images[type]
+            });
+        }
+
+        function gameOver() {
+            gameActive = false;
+            titleText.innerText = 'GAME OVER';
+            finalScoreValue.innerText = score;
+            finalScoreDisplay.style.display = 'block';
+            startBtn.innerText = 'RESTART';
+            overlay.style.display = 'flex';
+        }
+
+        // Main Game Loop
+        function update(time) {
+            if (!gameActive) return;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Move Player
+            if (player.movingLeft) player.x = Math.max(0, player.x - GAME_CONFIG.playerSpeed);
+            if (player.movingRight) player.x = Math.min(canvas.width - player.width, player.x + GAME_CONFIG.playerSpeed);
+
+            // Draw Player
+            if (images.player.complete) {
+                ctx.drawImage(images.player, player.x, player.y, player.width, player.height);
+            }
+
+            // Spawn monitoring
+            if (time - lastSpawn > GAME_CONFIG.itemSpawnRate) {
+                spawnItem();
+                lastSpawn = time;
+            }
+
+            // Update and draw items
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                item.y += item.speed;
+
+                // Draw item
+                if (item.image.complete) {
+                    ctx.drawImage(item.image, item.x, item.y, item.width, item.height);
+                }
+
+                // Collision Detection
+                const centerX = item.x + item.width / 2;
+                const centerY = item.y + item.height / 2;
+
+                if (centerX > player.x && centerX < player.x + player.width &&
+                    centerY > player.y && centerY < player.y + player.height) {
+                    
+                    // Score logic
+                    if (item.type === 'bad') {
+                        gameOver(); // Game ends if you catch a cloud
+                    } else {
+                        score += 50;
+                        scoreElement.innerText = score;
+                    }
+                    
+                    items.splice(i, 1); // Remove item
+                    continue;
+                }
+
+                // Remove if falls off screen
+                if (item.y > canvas.height) {
+                    items.splice(i, 1);
+                }
+            }
+
+            if (gameActive) {
+                requestAnimationFrame(update);
+            }
+        }
+
+        // Start button
+        startBtn.onclick = () => {
+            overlay.style.display = 'none';
+            gameActive = true;
+            score = 0;
+            scoreElement.innerText = score;
+            items = [];
+            lastSpawn = performance.now();
+            requestAnimationFrame(update);
+        };
+    </script>
+</body>
+</html>
+
