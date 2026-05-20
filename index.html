@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kitten Catch Game</title>
+    <title>Chytání kočiček</title>
     <style>
-        /* CSS - Styling for the game */
+        /* CSS STYLOVANI */
         body {
             margin: 0;
             padding: 0;
@@ -26,7 +26,7 @@
             display: block;
         }
 
-        /* Score Display */
+        /* SCORE ZOBRAZENI */
         #score-board {
             position: absolute;
             top: 20px;
@@ -51,7 +51,7 @@
             font-weight: 900;
         }
 
-        /* Mobile Controls */
+        /* OPRIMALIZACE NA MOBIL */
         .controls {
             position: absolute;
             bottom: 100px;
@@ -128,10 +128,10 @@
 <body>
 
     <div id="game-container">
-        <!-- The Game Canvas -->
+
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Score counter -->
+        <!-- POCITANI SCORE -->
         <div id="score-board">
             <span id="score-label">Score</span>
             <span id="score-value">0</span>
@@ -149,9 +149,9 @@
 
         <!-- ZACATEK/KONEC HRY -->
         <div id="overlay">
-            <h1 id="title-text">KITTEN CATCH</h1>
+            <h1 id="title-text">KOČKOCATCH</h1>
             <p id="instruction-text">Pochytej koťátka a prosecco (+50) a vyhni se cibuli!</p>
-            <div id="final-score-display">Final Score: <span id="final-score-value">0</span></div>
+            <div id="final-score-display">Finalní Score: <span id="final-score-value">0</span></div>
             <button id="start-btn">START</button>
         </div>
     </div>
@@ -166,7 +166,7 @@
             bad:    'images/bad.png'
         };
 
-        // Game Settings
+        // NASTAVENI
         const GAME_CONFIG = {
             playerSpeed: 8,
             itemSpawnRate: 1000, // ms
@@ -286,13 +286,13 @@
                     
                     // SCORE
                     if (item.type === 'bad') {
-                        gameOver(); // Game ends if you catch a cloud
+                        gameOver(); // HRA KONČI CIBULI :D
                     } else {
                         score += 50;
                         scoreElement.innerText = score;
                     }
                     
-                    items.splice(i, 1); // Remove item
+                    items.splice(i, 1); // ODSTRANĚNI ITEMU
                     continue;
                 }
 
