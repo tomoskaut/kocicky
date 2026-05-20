@@ -88,7 +88,7 @@
             height: 40px;
         }
 
-        /* Start Screen and Game Over */
+        /* START A KONEC HRY */
         #overlay {
             position: absolute;
             inset: 0;
@@ -137,7 +137,7 @@
             <span id="score-value">0</span>
         </div>
 
-        <!-- Transparent arrows for mobile -->
+        <!-- ŠIPKY PRO MOBIL -->
         <div class="controls">
             <div id="btn-left" class="arrow-btn" ontouchstart="moveLeft(true)" ontouchend="moveLeft(false)" onmousedown="moveLeft(true)" onmouseup="moveLeft(false)">
                 <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
@@ -147,7 +147,7 @@
             </div>
         </div>
 
-        <!-- Start/Game Over Screen -->
+        <!-- ZACATEK/KONEC HRY -->
         <div id="overlay">
             <h1 id="title-text">KITTEN CATCH</h1>
             <p id="instruction-text">Pochytej koťátka a prosecco (+50) a vyhni se cibuli!</p>
@@ -157,9 +157,7 @@
     </div>
 
     <script>
-        /***********************************************************
-         * EDIT THESE PATHS TO CHANGE YOUR PICTURES
-         ***********************************************************/
+
         const IMAGE_PATHS = {
             player: 'images/player.png',
             good1:  'images/good1.png',
@@ -175,9 +173,6 @@
             itemBaseSpeed: 3
         };
 
-        /***********************************************************
-         * JAVASCRIPT - Game Logic
-         ***********************************************************/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score-value');
@@ -192,7 +187,7 @@
         let items = [];
         let lastSpawn = 0;
         
-        // Player properties
+        // HRÁČ
         const player = {
             x: 0,
             y: 0,
@@ -202,14 +197,13 @@
             movingRight: false
         };
 
-        // Load Images
+        // ITEMY
         const images = {};
         for (let key in IMAGE_PATHS) {
             images[key] = new Image();
             images[key].src = IMAGE_PATHS[key];
         }
 
-        // Resize canvas to fill screen
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -219,11 +213,11 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Control functions
+        // OVLADANI
         function moveLeft(isMoving) { player.movingLeft = isMoving; }
         function moveRight(isMoving) { player.movingRight = isMoving; }
 
-        // Keyboard controls
+        // OVLADANI PRO KLAVESNICI
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft(true);
             if (e.key === 'ArrowRight' || e.key === 'd') moveRight(true);
@@ -233,7 +227,7 @@
             if (e.key === 'ArrowRight' || e.key === 'd') moveRight(false);
         });
 
-        // Spawn a new falling item
+        // NASTAVENI ITEMU
         function spawnItem() {
             const types = ['good1', 'good2', 'good3', 'bad'];
             const type = types[Math.floor(Math.random() * types.length)];
@@ -258,46 +252,39 @@
             overlay.style.display = 'flex';
         }
 
-        // Main Game Loop
         function update(time) {
             if (!gameActive) return;
 
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Move Player
+            // POHYB HRAČE
             if (player.movingLeft) player.x = Math.max(0, player.x - GAME_CONFIG.playerSpeed);
             if (player.movingRight) player.x = Math.min(canvas.width - player.width, player.x + GAME_CONFIG.playerSpeed);
 
-            // Draw Player
             if (images.player.complete) {
                 ctx.drawImage(images.player, player.x, player.y, player.width, player.height);
             }
 
-            // Spawn monitoring
             if (time - lastSpawn > GAME_CONFIG.itemSpawnRate) {
                 spawnItem();
                 lastSpawn = time;
             }
-
-            // Update and draw items
+            
             for (let i = items.length - 1; i >= 0; i--) {
                 const item = items[i];
                 item.y += item.speed;
 
-                // Draw item
                 if (item.image.complete) {
                     ctx.drawImage(item.image, item.x, item.y, item.width, item.height);
                 }
 
-                // Collision Detection
                 const centerX = item.x + item.width / 2;
                 const centerY = item.y + item.height / 2;
 
                 if (centerX > player.x && centerX < player.x + player.width &&
                     centerY > player.y && centerY < player.y + player.height) {
                     
-                    // Score logic
+                    // SCORE
                     if (item.type === 'bad') {
                         gameOver(); // Game ends if you catch a cloud
                     } else {
@@ -309,7 +296,6 @@
                     continue;
                 }
 
-                // Remove if falls off screen
                 if (item.y > canvas.height) {
                     items.splice(i, 1);
                 }
@@ -320,7 +306,7 @@
             }
         }
 
-        // Start button
+        // START TLACITKO
         startBtn.onclick = () => {
             overlay.style.display = 'none';
             gameActive = true;
